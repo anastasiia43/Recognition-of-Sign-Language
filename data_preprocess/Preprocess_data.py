@@ -49,6 +49,44 @@ def preprocess_data(more_landmarks = False, depth = True):
             return data
     return X, y, NON_EMPTY_FRAME_IDXS
 
+def split_data(X, y, train, NON_EMPTY_FRAME_IDXS = None):
+    # Split Train
+    splitter = GroupShuffleSplit(test_size=0.20, n_splits=2, random_state=Cfg.SEED)
+    PARTICIPANT_IDS = train['participant_id'].values
+    train_idxs, val_test_idxs = next(splitter.split(X, y, groups=PARTICIPANT_IDS))
+
+    # Split Validation and Test
+    X_val_test = X[val_test_idxs]
+    y_val_test = y[val_test_idxs]
+
+    # Get Train
+    X_train = X[train_idxs]
+    y_train = y[train_idxs]
+    del X, y
+
+    splitter = GroupShuffleSplit(test_size=0.5, n_splits=2, random_state=Cfg.SEED)
+    PARTICIPANT_IDS_VAL_TEST = train.loc[val_test_idxs]['participant_id'].values
+    test_idxs, val_idxs = next(splitter.split(X_val_test, y_val_test, groups=PARTICIPANT_IDS_VAL_TEST))
+
+    # Get Validation
+    X_val = X_val_test[val_idxs]
+    y_val = y_val_test[val_idxs]
+
+    # Get Test
+    X_test = X_val_test[test_idxs]
+    y_test = y_val_test[test_idxs]
+
+    del X_val_test, y_val_test
+
+    if not NON_EMPTY_FRAME_IDXS:
+        NON_EMPTY_FRAME_IDXS_TRAIN = NON_EMPTY_FRAME_IDXS[train_idxs]
+        NON_EMPTY_FRAME_IDXS_VAL_TEST = NON_EMPTY_FRAME_IDXS[val_test_idxs]
+        NON_EMPTY_FRAME_IDXS_VAL = NON_EMPTY_FRAME_IDXS_VAL_TEST[val_idxs]
+        NON_EMPTY_FRAME_IDXS_TEST = NON_EMPTY_FRAME_IDXS_VAL_TEST[test_idxs]
+        return X_train, X_val, X_test, y_train, y_val, y_test, NON_EMPTY_FRAME_IDXS_TRAIN, NON_EMPTY_FRAME_IDXS_VAL, NON_EMPTY_FRAME_IDXS_TEST
+
+    return X_train, X_val, X_test, y_train, y_val, y_test
+
 if __name__ == '__main__':
 
     train = pd.read_csv(f'{Cfg.SAVE_PATH}train.csv')
