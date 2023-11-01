@@ -1,12 +1,13 @@
+import os
 import numpy as np
 import pandas as pd
 
 from tqdm.notebook import tqdm
-import os
+from sklearn.model_selection import GroupShuffleSplit
 
-from git.utils.Cfg import Cfg
+from git.RecognitionofSignLanguage.utils.Cfg import Cfg
 from Preprocess_layer import PreprocessLayer
-from git.utils.Landmark_indices import Landmarks as lm
+from git.RecognitionofSignLanguage.utils.Landmark_indices import Landmarks as lm
 
 def load_relevant_data_subset(pq_path):
     if Cfg.DEPTH:
