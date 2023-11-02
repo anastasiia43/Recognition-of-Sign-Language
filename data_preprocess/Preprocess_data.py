@@ -9,6 +9,18 @@ from git.RecognitionofSignLanguage.utils.Cfg import Cfg
 from Preprocess_layer import PreprocessLayer
 from git.RecognitionofSignLanguage.utils.Landmark_indices import Landmarks as lm
 
+
+def create_train_file():
+    def get_file_path(path):
+        return f'{Cfg.DATA_RAW}{path}'
+
+    train = pd.read_csv(f'{Cfg.DATA_RAW}train.csv')
+    train['file_path'] = train['path'].apply(get_file_path)
+    train['sign_ord'] = train['sign'].astype('category').cat.codes
+    train.to_csv(f'{Cfg.SAVE_PATH}train.csv')
+    return train
+
+
 def load_relevant_data_subset(pq_path):
     if Cfg.DEPTH:
         data_columns = ['x', 'y', 'z']
@@ -42,14 +54,20 @@ def preprocess_data(more_landmarks = False, depth = True):
         y[row_idx] = sign_ord
         NON_EMPTY_FRAME_IDXS[row_idx] = non_empty_frame_idxs
         # Sanity check, data should not contain NaN values
-        if row_idx % 5000 == 0:
+        if row_idx % 1000 == 0:
             print(f"Generate {row_idx} data")
         if np.isnan(data).sum() > 0:
             print(row_idx)
             return data
     return X, y, NON_EMPTY_FRAME_IDXS
 
-def split_data(X, y, train, NON_EMPTY_FRAME_IDXS = None):
+
+def get_split_data(NON_EMPTY_FRAME_IDXS = None):
+
+    X = np.load(f'{Cfg.PATH_DATA}/X.npy')
+    y = np.load(f'{Cfg.PATH_DATA}/y.npy')
+    train = pd.read_csv(f'{Cfg.SAVE_PATH}train.csv')
+
     # Split Train
     splitter = GroupShuffleSplit(test_size=0.20, n_splits=2, random_state=Cfg.SEED)
     PARTICIPANT_IDS = train['participant_id'].values
@@ -89,7 +107,7 @@ def split_data(X, y, train, NON_EMPTY_FRAME_IDXS = None):
 
 if __name__ == '__main__':
 
-    train = pd.read_csv(f'{Cfg.SAVE_PATH}train.csv')
+    train = create_train_file()
     N_SAMPLES = len(train)
 
     # Preprocess All Data From Scratch

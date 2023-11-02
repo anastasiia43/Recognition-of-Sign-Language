@@ -1,4 +1,4 @@
-from git.utils.Cfg import Cfg
+from git.RecognitionofSignLanguage.utils.Cfg import Cfg
 import numpy as np
 
 class Landmarks:
