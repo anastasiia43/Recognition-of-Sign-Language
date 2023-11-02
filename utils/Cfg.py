@@ -16,7 +16,7 @@ class Cfg:
 
     FOLDER_SAVE = f'data_frame_{INPUT_SIZE}_more_landmarks_{MORE_LANDMARKS}_depth_{DEPTH}'  # Name folder where save model or preprocess data
 
-    MODEL_OUT_PATH = f'../сonvlstm_checkpoints/{FOLDER_SAVE}/'  # Path for save model
+    MODEL_OUT_PATH = f'../checkpoints/lstm_checkpoints/{FOLDER_SAVE}/'  # Path for save model
     PATH_DATA = f'{SAVE_PATH}{FOLDER_SAVE}'  # Path for save preprocess data
 
     # Model Config
