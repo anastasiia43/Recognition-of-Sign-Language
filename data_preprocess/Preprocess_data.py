@@ -62,11 +62,15 @@ def preprocess_data(more_landmarks = False, depth = True):
     return X, y, NON_EMPTY_FRAME_IDXS
 
 
-def get_split_data(NON_EMPTY_FRAME_IDXS = None):
+def get_split_data(use_NON_EMPTY_FRAME_IDXS = False):
 
     X = np.load(f'{Cfg.PATH_DATA}/X.npy')
     y = np.load(f'{Cfg.PATH_DATA}/y.npy')
     train = pd.read_csv(f'{Cfg.SAVE_PATH}train.csv')
+
+    # for 22 frames
+    train = train.drop(train.index[[13542, 93042]])
+    train = train.reset_index(drop=True)
 
     # Split Train
     splitter = GroupShuffleSplit(test_size=0.20, n_splits=2, random_state=Cfg.SEED)
@@ -96,16 +100,22 @@ def get_split_data(NON_EMPTY_FRAME_IDXS = None):
 
     del X_val_test, y_val_test
 
-    if not NON_EMPTY_FRAME_IDXS:
+    if use_NON_EMPTY_FRAME_IDXS:
         NON_EMPTY_FRAME_IDXS_TRAIN = NON_EMPTY_FRAME_IDXS[train_idxs]
         NON_EMPTY_FRAME_IDXS_VAL_TEST = NON_EMPTY_FRAME_IDXS[val_test_idxs]
         NON_EMPTY_FRAME_IDXS_VAL = NON_EMPTY_FRAME_IDXS_VAL_TEST[val_idxs]
         NON_EMPTY_FRAME_IDXS_TEST = NON_EMPTY_FRAME_IDXS_VAL_TEST[test_idxs]
         return X_train, X_val, X_test, y_train, y_val, y_test, NON_EMPTY_FRAME_IDXS_TRAIN, NON_EMPTY_FRAME_IDXS_VAL, NON_EMPTY_FRAME_IDXS_TEST
 
+    print(f'X_train shape: {X_train.shape}, X_val shape: {X_val.shape}, X_test shape: {X_test.shape}')
+    print(f'y_train shape: {y_train.shape}, y_val shape: {y_val.shape}, y_test shape: {y_test.shape}')
+
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 if __name__ == '__main__':
+    import sys
+
+    print(sys.path)
 
     train = create_train_file()
     N_SAMPLES = len(train)
@@ -123,4 +133,6 @@ if __name__ == '__main__':
     np.save(f'{Cfg.SAVE_PATH}{name_folder}/X.npy', X)
     np.save(f'{Cfg.SAVE_PATH}{name_folder}/y.npy', y)
     np.save(f'{Cfg.SAVE_PATH}{name_folder}/NON_EMPTY_FRAME_IDXS.npy', y)
+
+
 
