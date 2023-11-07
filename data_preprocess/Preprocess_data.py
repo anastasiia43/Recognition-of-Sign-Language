@@ -6,7 +6,7 @@ from tqdm.notebook import tqdm
 from sklearn.model_selection import GroupShuffleSplit
 
 from git.RecognitionofSignLanguage.utils.Cfg import Cfg
-from Preprocess_layer import PreprocessLayer
+from git.RecognitionofSignLanguage.data_preprocess.Preprocess_layer import PreprocessLayer
 from git.RecognitionofSignLanguage.utils.Landmark_indices import Landmarks as lm
 
 
@@ -69,11 +69,11 @@ def get_split_data(use_NON_EMPTY_FRAME_IDXS = False):
     train = pd.read_csv(f'{Cfg.SAVE_PATH}train.csv')
 
     # for 22 frames
-    train = train.drop(train.index[[13542, 93042]])
-    train = train.reset_index(drop=True)
+    #train = train.drop(train.index[[13542, 93042]])
+    #train = train.reset_index(drop=True)
 
     # Split Train
-    splitter = GroupShuffleSplit(test_size=0.20, n_splits=2, random_state=Cfg.SEED)
+    splitter = GroupShuffleSplit(test_size=0.10, n_splits=2, random_state=Cfg.SEED)
     PARTICIPANT_IDS = train['participant_id'].values
     train_idxs, val_test_idxs = next(splitter.split(X, y, groups=PARTICIPANT_IDS))
 
@@ -101,10 +101,15 @@ def get_split_data(use_NON_EMPTY_FRAME_IDXS = False):
     del X_val_test, y_val_test
 
     if use_NON_EMPTY_FRAME_IDXS:
+        NON_EMPTY_FRAME_IDXS = np.load(f'{Cfg.PATH_DATA}/NON_EMPTY_FRAME_IDXS.npy')
         NON_EMPTY_FRAME_IDXS_TRAIN = NON_EMPTY_FRAME_IDXS[train_idxs]
         NON_EMPTY_FRAME_IDXS_VAL_TEST = NON_EMPTY_FRAME_IDXS[val_test_idxs]
         NON_EMPTY_FRAME_IDXS_VAL = NON_EMPTY_FRAME_IDXS_VAL_TEST[val_idxs]
         NON_EMPTY_FRAME_IDXS_TEST = NON_EMPTY_FRAME_IDXS_VAL_TEST[test_idxs]
+
+        print(f'X_train shape: {X_train.shape}, X_val shape: {X_val.shape}, X_test shape: {X_test.shape}')
+        print(f'y_train shape: {y_train.shape}, y_val shape: {y_val.shape}, y_test shape: {y_test.shape}')
+
         return X_train, X_val, X_test, y_train, y_val, y_test, NON_EMPTY_FRAME_IDXS_TRAIN, NON_EMPTY_FRAME_IDXS_VAL, NON_EMPTY_FRAME_IDXS_TEST
 
     print(f'X_train shape: {X_train.shape}, X_val shape: {X_val.shape}, X_test shape: {X_test.shape}')
