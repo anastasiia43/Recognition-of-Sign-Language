@@ -29,7 +29,4 @@ class Transformer_Utils:
     GELU = tf.keras.activations.gelu
 
     N_WARMUP_EPOCHS = 0
-    LR_MAX = 1e-3
-    N_EPOCHS = 30
     WD_RATIO = 0.05
-    BATCH_ALL_SIGNS_N = 2

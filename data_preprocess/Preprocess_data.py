@@ -69,8 +69,8 @@ def get_split_data(use_NON_EMPTY_FRAME_IDXS = False):
     train = pd.read_csv(f'{Cfg.SAVE_PATH}train.csv')
 
     # for 22 frames
-    #train = train.drop(train.index[[13542, 93042]])
-    #train = train.reset_index(drop=True)
+    train = train.drop(train.index[[13542, 93042]])
+    train = train.reset_index(drop=True)
 
     # Split Train
     splitter = GroupShuffleSplit(test_size=0.10, n_splits=2, random_state=Cfg.SEED)

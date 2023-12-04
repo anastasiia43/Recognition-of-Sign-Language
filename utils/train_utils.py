@@ -12,7 +12,7 @@ import dataframe_image as dfi
 
 # Import own class
 from git.RecognitionofSignLanguage.utils.Cfg import Cfg
-
+from git.RecognitionofSignLanguage.utils.Landmark_indices import Landmarks as lm
 
 class TrainUtils:
 
@@ -65,6 +65,40 @@ class TrainUtils:
         plt.savefig(f'{Cfg.MODEL_OUT_PATH}{name_folder}/model_{name}.png')
         plt.clf()
         print(f'Plots saved as {Cfg.MODEL_OUT_PATH}{name_folder}/model_{name}.png')
+
+    def prepare_for_embedding(self, x, MEAN_STD):
+        x = tf.slice(x, [0, 0, 0, 0], [-1, Cfg.INPUT_SIZE, lm.N_COLS, Cfg.N_DIMS])
+        # LIPS
+        lips = tf.slice(x, [0, 0, lm.LIPS_START, 0], [-1, Cfg.INPUT_SIZE, 40, Cfg.N_DIMS])
+        lips = tf.where(
+            tf.math.equal(lips, 0.0),
+            0.0,
+            (lips - MEAN_STD['lips_mean']) / MEAN_STD['lips_std'],
+        )
+        # LEFT HAND
+        left_hand = tf.slice(x, [0, 0, 40, 0], [-1, Cfg.INPUT_SIZE, 21, Cfg.N_DIMS])
+        left_hand = tf.where(
+            tf.math.equal(left_hand, 0.0),
+            0.0,
+            (left_hand - MEAN_STD['hand_mean']) / MEAN_STD['hand_std'],
+        )
+        # POSE
+        pose = tf.slice(x, [0, 0, 61, 0], [-1, Cfg.INPUT_SIZE, 5, Cfg.N_DIMS])
+        pose = tf.where(
+            tf.math.equal(pose, 0.0),
+            0.0,
+            (pose - MEAN_STD['pose_mean']) / MEAN_STD['pose_std'],
+        )
+
+        # Flatten
+        lips = tf.reshape(lips, [-1, Cfg.INPUT_SIZE, 40 * Cfg.N_DIMS])
+        left_hand = tf.reshape(left_hand, [-1, Cfg.INPUT_SIZE, 21 * Cfg.N_DIMS])
+        pose = tf.reshape(pose, [-1, Cfg.INPUT_SIZE, 5 * Cfg.N_DIMS])
+
+        return lips, left_hand, pose
+
+
+
 
     def train(self, train, validate, model, callbacks, name_folder):
         history = model.fit(train,

@@ -20,9 +20,9 @@ class Cfg:
     PATH_DATA = f'{SAVE_PATH}{FOLDER_SAVE}'  # Path for save preprocess data
 
     # Model Config
-    EPOCHS = 150
+    EPOCHS = 30
     BATCH_SIZE = 64
-    LR = .0001
+    LR = 1e-3
 
     NUM_CLASSES = 250
     DROPOUTS = [0.4, 0.4]
