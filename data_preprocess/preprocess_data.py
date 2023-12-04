@@ -6,8 +6,10 @@ from tqdm.notebook import tqdm
 from sklearn.model_selection import GroupShuffleSplit
 
 from git.RecognitionofSignLanguage.utils.Cfg import Cfg
+from git.RecognitionofSignLanguage.utils.TrainUtils import TrainUtils
+from git.RecognitionofSignLanguage.utils.Landmarks import Landmarks as lm
 from git.RecognitionofSignLanguage.data_preprocess.Preprocess_layer import PreprocessLayer
-from git.RecognitionofSignLanguage.utils.Landmark_indices import Landmarks as lm
+from git.RecognitionofSignLanguage.data_preprocess.calculate_mean_std import get_all_mean_std
 
 
 def create_train_file():
@@ -40,8 +42,9 @@ def get_data(file_path):
     data = preprocess_layer(data)
     return data
 
+
 # Get the full dataset
-def preprocess_data(more_landmarks = False, depth = True):
+def preprocess_data():
     # Create arrays to save data
     X = np.zeros([N_SAMPLES, Cfg.INPUT_SIZE, lm.N_COLS, Cfg.N_DIMS], dtype=np.float32)
     y = np.zeros([N_SAMPLES], dtype=np.int32)
@@ -62,8 +65,7 @@ def preprocess_data(more_landmarks = False, depth = True):
     return X, y, NON_EMPTY_FRAME_IDXS
 
 
-def get_split_data(use_NON_EMPTY_FRAME_IDXS = False):
-
+def get_split_data(use_NON_EMPTY_FRAME_IDXS=False):
     X = np.load(f'{Cfg.PATH_DATA}/X.npy')
     y = np.load(f'{Cfg.PATH_DATA}/y.npy')
     train = pd.read_csv(f'{Cfg.SAVE_PATH}train.csv')
@@ -117,6 +119,19 @@ def get_split_data(use_NON_EMPTY_FRAME_IDXS = False):
 
     return X_train, X_val, X_test, y_train, y_val, y_test
 
+
+def prepare_data():
+    train_utils = TrainUtils()
+    train_utils.seed_it_all()
+
+    # Get split data
+    X_train, X_val, X_test, y_train, y_val, y_test = get_split_data()
+
+    MEAN_STD = get_all_mean_std(X_train)
+
+    return X_train, X_val, X_test, y_train, y_val, y_test, MEAN_STD
+
+
 if __name__ == '__main__':
     import sys
 
@@ -126,7 +141,7 @@ if __name__ == '__main__':
     N_SAMPLES = len(train)
 
     # Preprocess All Data From Scratch
-    X, y, NON_EMPTY_FRAME_IDXS = preprocess_data(more_landmarks=Cfg.MORE_LANDMARKS, depth=Cfg.DEPTH)
+    X, y, NON_EMPTY_FRAME_IDXS = preprocess_data()
 
     # Create Folder
     name_folder = f'data_frame_{Cfg.INPUT_SIZE}_more_landmarks_{Cfg.MORE_LANDMARKS}_depth_{Cfg.DEPTH}'
@@ -138,6 +153,3 @@ if __name__ == '__main__':
     np.save(f'{Cfg.SAVE_PATH}{name_folder}/X.npy', X)
     np.save(f'{Cfg.SAVE_PATH}{name_folder}/y.npy', y)
     np.save(f'{Cfg.SAVE_PATH}{name_folder}/NON_EMPTY_FRAME_IDXS.npy', y)
-
-
-

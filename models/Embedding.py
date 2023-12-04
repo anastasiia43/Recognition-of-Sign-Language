@@ -1,5 +1,5 @@
 import tensorflow as tf
-from git.RecognitionofSignLanguage.utils.Embedding_utils import Embedding_utils as eu
+from git.RecognitionofSignLanguage.utils.EmbeddingUtils import EmbeddingUtils as eu
 from git.RecognitionofSignLanguage.utils.Cfg import Cfg
 
 

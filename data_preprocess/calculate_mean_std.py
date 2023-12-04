@@ -3,7 +3,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from git.RecognitionofSignLanguage.utils.Cfg import Cfg
-from git.RecognitionofSignLanguage.utils.Landmark_indices import Landmarks as lm
+from git.RecognitionofSignLanguage.utils.Landmarks import Landmarks as lm
 
 
 def get_mean_std(INDX, X_train):

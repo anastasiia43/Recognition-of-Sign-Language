@@ -1,5 +1,7 @@
 import tensorflow as tf
-class Embedding_utils():
+
+
+class TransformerUtils:
     # Epsilon value for layer normalisation
     LAYER_NORM_EPS = 1e-6
 
@@ -10,6 +12,14 @@ class Embedding_utils():
     # final embedding and transformer embedding size
     UNITS = 512
 
+    # Transformer
+    NUM_BLOCKS = 2
+    MLP_RATIO = 2
+
+    # Dropout
+    EMBEDDING_DROPOUT = 0.00
+    MLP_DROPOUT_RATIO = 0.30
+    CLASSIFIER_DROPOUT_RATIO = 0.10
 
     # Initiailizers
     INIT_HE_UNIFORM = tf.keras.initializers.he_uniform
@@ -17,3 +27,6 @@ class Embedding_utils():
     INIT_ZEROS = tf.keras.initializers.constant(0.0)
     # Activations
     GELU = tf.keras.activations.gelu
+
+    N_WARMUP_EPOCHS = 0
+    WD_RATIO = 0.05

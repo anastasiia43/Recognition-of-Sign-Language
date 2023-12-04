@@ -1,5 +1,5 @@
 import tensorflow as tf
-from git.RecognitionofSignLanguage.utils.Transformer_utils import Transformer_Utils as tu
+from git.RecognitionofSignLanguage.utils.TransformerUtils import TransformerUtils as tu
 
 
 class Transformer(tf.keras.Model):
@@ -13,7 +13,7 @@ class Transformer(tf.keras.Model):
         self.ln_2s = []
         self.mlps = []
         # Make Transformer Blocks
-        for i in range(self.num_blocks):
+        for _ in range(self.num_blocks):
             # Multi Head Attention
             self.mhas.append(MultiHeadAttention(tu.UNITS, 8))
             # Multi Layer Perception
@@ -38,9 +38,9 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         self.d_model = d_model
         self.num_of_heads = num_of_heads
         self.depth = d_model // num_of_heads
-        self.wq = [tf.keras.layers.Dense(self.depth) for i in range(num_of_heads)]
-        self.wk = [tf.keras.layers.Dense(self.depth) for i in range(num_of_heads)]
-        self.wv = [tf.keras.layers.Dense(self.depth) for i in range(num_of_heads)]
+        self.wq = [tf.keras.layers.Dense(self.depth) for _ in range(num_of_heads)]
+        self.wk = [tf.keras.layers.Dense(self.depth) for _ in range(num_of_heads)]
+        self.wv = [tf.keras.layers.Dense(self.depth) for _ in range(num_of_heads)]
         self.wo = tf.keras.layers.Dense(d_model)
         self.softmax = tf.keras.layers.Softmax()
 

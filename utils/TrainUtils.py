@@ -12,7 +12,13 @@ import dataframe_image as dfi
 
 # Import own class
 from git.RecognitionofSignLanguage.utils.Cfg import Cfg
-from git.RecognitionofSignLanguage.utils.Landmark_indices import Landmarks as lm
+from git.RecognitionofSignLanguage.utils.Landmarks import Landmarks as lm
+
+# Import Loss
+from git.RecognitionofSignLanguage.loss.ArcFaceLoss import ArcFaceLoss
+from git.RecognitionofSignLanguage.loss.CrossentropyLabelSmoothing import CrossentropyLabelSmoothing
+from git.RecognitionofSignLanguage.loss.CustomLoss import CustomLoss
+
 
 class TrainUtils:
 
@@ -34,7 +40,7 @@ class TrainUtils:
 
             return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress))) * lr_max
 
-    def create_callback(self, name_folder):
+    def create_callback(self):
         earlyStopping = EarlyStopping(
             monitor="val_accuracy",
             min_delta=0,  # minimium amount of change to count as an improvement
@@ -44,7 +50,7 @@ class TrainUtils:
             monitor="val_accuracy",
             factor=0.5,
             patience=10),
-        modelCheckpoint = ModelCheckpoint(f"{Cfg.MODEL_OUT_PATH}{name_folder}/best_model.hdf5",
+        modelCheckpoint = ModelCheckpoint(f"{Cfg.MODEL_OUT_PATH}/best_model.hdf5",
                                           monitor='val_accuracy',
                                           verbose=1,
                                           save_weights_only=True,
@@ -55,16 +61,16 @@ class TrainUtils:
 
         return [earlyStopping, reduceLROnPlateau, modelCheckpoint]
 
-    def save_plot(self, history, name, name_folder):
+    def save_plot(self, history, name):
         plt.plot(history.history[name])
         plt.plot(history.history[f'val_{name}'])
         plt.title(f'model {name}')
         plt.ylabel(name)
         plt.xlabel('epoch')
         plt.legend(['train', 'val'], loc='upper left')
-        plt.savefig(f'{Cfg.MODEL_OUT_PATH}{name_folder}/model_{name}.png')
+        plt.savefig(f'{Cfg.MODEL_OUT_PATH}/model_{name}.png')
         plt.clf()
-        print(f'Plots saved as {Cfg.MODEL_OUT_PATH}{name_folder}/model_{name}.png')
+        print(f'Plots saved as {Cfg.MODEL_OUT_PATH}/model_{name}.png')
 
     def prepare_for_embedding(self, x, MEAN_STD):
         x = tf.slice(x, [0, 0, 0, 0], [-1, Cfg.INPUT_SIZE, lm.N_COLS, Cfg.N_DIMS])
@@ -97,26 +103,60 @@ class TrainUtils:
 
         return lips, left_hand, pose
 
+    def compice_model(self, config_loss, model):
+        # Choose loss
+        if config_loss['loss'] == "CustomLoss":
+            loss = CustomLoss(config_loss)
+        elif config_loss['loss'] == "ArcFaceLoss":
+            loss = ArcFaceLoss()
+        else:
+            loss = CrossentropyLabelSmoothing()
 
+        model.compile(
+            loss=loss,
+            optimizer=tf.keras.optimizers.Adam(learning_rate=Cfg.LR),
+            metrics=["accuracy",
+                     tf.keras.metrics.SparseTopKCategoricalAccuracy(k=5, name="top-5-accuracy"),
+                     tf.keras.metrics.SparseTopKCategoricalAccuracy(k=10, name="top-10-accuracy")
+                     ],
+        )
 
+        return model
 
-    def train(self, train, validate, model, callbacks, name_folder):
+    def train_and_inference(self, model, X_train, X_val, X_test, y_train, y_val, y_test):
+        # Create Folder
+        if not os.path.exists(f'{Cfg.MODEL_OUT_PATH}'):
+            os.makedirs(f'{Cfg.MODEL_OUT_PATH}')
+
+        callbacks = self.create_callback()
+
+        # change data for save in ram data
+        train = tf.data.Dataset.from_tensor_slices((X_train, y_train)).shuffle(4 * Cfg.BATCH_SIZE).batch(Cfg.BATCH_SIZE)
+        del X_train, y_train
+
+        validate = tf.data.Dataset.from_tensor_slices((X_val, y_val)).batch(Cfg.BATCH_SIZE)
+        del X_val, y_val
+
+        model = self.train(train, validate, model, callbacks)
+        self.inference(X_test, y_test, model)
+
+    def train(self, train, validate, model, callbacks):
         history = model.fit(train,
                             batch_size=Cfg.BATCH_SIZE,
                             epochs=Cfg.EPOCHS,
                             validation_data=validate,
                             callbacks=callbacks)
 
-        self.save_plot(history, "loss", name_folder)
-        self.save_plot(history, "accuracy", name_folder)
-        self.save_plot(history, "top-5-accuracy", name_folder)
-        self.save_plot(history, "top-10-accuracy", name_folder)
+        self.save_plot(history, "loss")
+        self.save_plot(history, "accuracy")
+        self.save_plot(history, "top-5-accuracy")
+        self.save_plot(history, "top-10-accuracy")
 
         return model
 
-    def inference(self, X_test, y_test, model, name_folder):
-        loss, acc, top_5_acc, top_10_acc = model.evaluate(X_test, y_test, verbose=2)
-        file_save = open(f"{Cfg.MODEL_OUT_PATH}{name_folder}/results.txt", "w")
+    def inference(self, X_test, y_test, model):
+        _, acc, top_5_acc, top_10_acc = model.evaluate(X_test, y_test, verbose=2)
+        file_save = open(f"{Cfg.MODEL_OUT_PATH}/results.txt", "w")
         result = f"Restored model, accuracy: {100 * acc}, top_5_accuracy: {100 * top_5_acc}, top_10_accuracy: {100 * top_10_acc}\n"
         print(result)
         file_save.writelines(result)
@@ -169,8 +209,6 @@ class TrainUtils:
             classification_report.head(Cfg.NUM_CLASSES).sort_values('f1-score', ascending=False),
             classification_report.tail(3),
         ))
-
-        classification_report_str = classification_report.to_string()
 
         # Створення таблиці Matplotlib
         fig, ax = plt.subplots(figsize=(10, 8))

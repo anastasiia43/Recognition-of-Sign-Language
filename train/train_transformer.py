@@ -4,14 +4,14 @@ import tensorflow_addons as tfa
 
 
 from git.RecognitionofSignLanguage.utils.Cfg import Cfg
-from git.RecognitionofSignLanguage.data_preprocess.Preprocess_data import get_split_data
+from git.RecognitionofSignLanguage.data_preprocess.preprocess_data import get_split_data
 from git.RecognitionofSignLanguage.data_preprocess.calculate_mean_std import get_all_mean_std
-from git.RecognitionofSignLanguage.utils.Landmark_indices import Landmarks as lm
-from git.RecognitionofSignLanguage.utils.Transformer_utils import Transformer_Utils as tu
+from git.RecognitionofSignLanguage.utils.Landmarks import Landmarks as lm
+from git.RecognitionofSignLanguage.utils.TransformerUtils import TransformerUtils as tu
 
 from git.RecognitionofSignLanguage.models.Embedding import Embedding
 from git.RecognitionofSignLanguage.models.Transformer import Transformer
-from git.RecognitionofSignLanguage.utils.train_utils import TrainUtils
+from git.RecognitionofSignLanguage.utils.TrainUtils import TrainUtils
 
 from git.RecognitionofSignLanguage.loss.ArcFaceLoss import ArcFaceLoss
 from git.RecognitionofSignLanguage.loss.CrossentropyLabelSmoothing import CrossentropyLabelSmoothing
@@ -97,9 +97,6 @@ if __name__ == '__main__':
     train_utils = TrainUtils()
     train_utils.seed_it_all()
 
-    # Create name folder
-    name_folder = 'Defoult'
-
     # Get split data
     X_train, X_val, X_test, y_train, y_val, y_test, NON_EMPTY_FRAME_IDXS_TRAIN, NON_EMPTY_FRAME_IDXS_VAL, NON_EMPTY_FRAME_IDXS_TEST = get_split_data(True)
 
@@ -108,10 +105,10 @@ if __name__ == '__main__':
     tf.keras.backend.clear_session()
 
     # Create Folder
-    if not os.path.exists(f'{Cfg.MODEL_OUT_PATH}{name_folder}'):
-        os.makedirs(f'{Cfg.MODEL_OUT_PATH}{name_folder}')
+    if not os.path.exists(f'{Cfg.MODEL_OUT_PATH}'):
+        os.makedirs(f'{Cfg.MODEL_OUT_PATH}')
 
-    callbacks = train_utils.create_callback(name_folder)
+    callbacks = train_utils.create_callback()
 
 
     # Learning rate for encoder
